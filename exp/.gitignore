@@ -1,0 +1,9 @@
+*.asv
+*~
+*.sc
+*.sph
+*.wts
+*.spl
+*.loc
+._*
+data/
