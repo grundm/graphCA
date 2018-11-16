@@ -1,6 +1,6 @@
 # GraphCA
 
-Martin Grund<sup>1</sup>, Norman Forschack<sup>1,2</sup>, Till Nierhaus<sup>1,3</sup>, and Arno Villringer<sup>1,4</sup>
+Martin Grund<sup>1*</sup>, Norman Forschack<sup>1,2</sup>, Till Nierhaus<sup>1,3</sup>, and Arno Villringer<sup>1,4</sup>
 
 <sup>1</sup>Max Planck Institute for Human Cognitive and Brain Sciences, 04103 Leipzig, Germany\
 <sup>2</sup>Experimental Psychology and Methods, Faculty of Life Sciences, University of Leipzig, 04109 Leipzig, Germany\
