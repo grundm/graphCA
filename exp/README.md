@@ -55,9 +55,9 @@ Control of DS5 Bipolar Constant Current Stimulator via MATLAB, Psychtoolbox and 
 ## Repository Structure
 
 - exp1.m - main script to control experiment by executing sections step-by-step
-- exp_init.m - helper function to initialize experiment-
+- exp_init.m - helper function to initialize experiment
 - nt/ - directory with code for experimental block
 - psi_1AFC/ - directory with code for threshold assessment
 - assets/func - general functions used in multiple scripts
-- assets/func - functions to plot threshold assessment and analog input data
+- assets/plot - functions to plot threshold assessment and analog input data
 - assets/vendor - external code, e.g. Palamedes & io32

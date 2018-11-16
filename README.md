@@ -1,12 +1,13 @@
 # GraphCA
 
-Martin Grund<sup>a,1</sup>, Norman Forschack<sup>a</sup>, Till Nierhaus<sup>a,b</sup>, and Arno Villringer<sup>a,c</sup>
+Martin Grund<sup>1</sup>, Norman Forschack<sup>1,2</sup>, Till Nierhaus<sup>1,3</sup>, and Arno Villringer<sup>1,4</sup>
 
-<sup>a</sup>Max Planck Institute for Human Cognitive and Brain Sciences, 04103 Leipzig, Germany
-<sup>b</sup>Center for Cognitive Neuroscience Berlin, Freie Universität Berlin, 14195 Berlin, Germany
-<sup>c</sup>MindBrainBody Institute, Berlin School of Mind and Brain, Humboldt-Universität zu Berlin, 10099 Berlin, Germany
+<sup>1</sup>Max Planck Institute for Human Cognitive and Brain Sciences, 04103 Leipzig, Germany
+<sup>2</sup>Experimental Psychology and Methods, Faculty of Life Sciences, University of Leipzig, 04109 Leipzig, Germany
+<sup>3</sup>Neurocomputation and Neuroimaging Unit, Department of Education and Psychology, Freie Universität Berlin, 14195 Berlin, Germany
+<sup>4</sup>MindBrainBody Institute, Berlin School of Mind and Brain, Humboldt-Universität zu Berlin, 10099 Berlin, Germany
 
-<sup>1</sup> Corresponding author: mgrund@cbs.mpg.de
+<sup>*</sup> Corresponding author: mgrund@cbs.mpg.de
 
 ## Repository content
 
