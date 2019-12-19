@@ -4,7 +4,15 @@ data_path <- '/data/pt_nro150/mri'
 
 ID_dir_wildcard <- 'ID[0-9][0-9]'
 
-signal_course_dir <- 'glm/stim_conf_TENT/signal_course_r4'
+signal_course_dir <- 'glm/all_cond_conf2_TENT/signal_course_r4' # EDIT #
+#signal_course_dir <- 'glm/all_cond_TENT/signal_course_r4' # EDIT #
+
+cond_str <- c('CR_conf', 'near_miss_conf', 'near_hit_conf') # EDIT #
+cond_str <- c('CR_conf', 'near_miss_unconf', 'near_miss_conf', 'near_hit_unconf', 'near_hit_conf') # EDIT #
+#cond_str <- c('CR', 'near_miss', 'near_hit') # EDIT #
+
+#time_points <- seq(-6,12,1.5)
+time_points <- seq(-6,12,0.75)
 
 # For within CI/SE
 
@@ -65,7 +73,7 @@ for (ID in ID_dir) {
 
 # Add column with time point counter
 for (i in c(1:length(sgl))) {
-  sgl[[i]]$t <- seq(-6,12,1.5)
+  sgl[[i]]$t <- time_points
 }
 
 # Transform to long format
@@ -87,7 +95,38 @@ sn$ROI <- as.factor(sn$ROI)
 sn$cond <- as.factor(sn$cond)
 sn$t <- as.factor(sn$t)
 
+#sn <- subset(sn, sn$cond==cond_str[1] | sn$cond==cond_str[2] | sn$cond==cond_str[3])
+
 sna <- summarySEwithin(data=sn, 'beta', betweenvars='ROI', withinvars=c('cond','t'),
                        idvar='ID', na.rm=FALSE, conf.interval=.95, .drop=TRUE)
 
 sna <- with(sna, sna[order(ROI,cond,t), ])
+
+# REARANGE DATA -----------------------------------------------------------
+
+# # Loop time courses per ROI x condition
+# for (ROI_cond in names(sgl[[1]])) {
+#   
+#   if (ROI_cond != "ID") {
+#     
+#     # Loop participants
+#     for (i in 1:length(sgl)) {
+#       
+#       # Get signal course data for current ROI x condition
+#       crs <- sgl[[i]][ROI_cond]
+#       
+#       # Rename column to reflect ID rather ROI x condition
+#       colnames(crs) <- unique(sgl[[i]]$ID)
+#       
+#       if (i == 1) {
+#         d <- crs
+#       }
+#       else {
+#         d[ , colnames(crs)] <- crs
+#       }
+#       
+#     }
+#     
+#     assign(ROI_cond, d)
+#   }
+# }

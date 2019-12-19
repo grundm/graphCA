@@ -70,19 +70,17 @@ mri_path=/data/pt_nro150/mri
 
 atlas_path=$mri_path/atlas
 
-anat_path=$mri_path/ID$ID/T1
+anat_path=$mri_path/ID$ID/T1_2018
 
 #onsets_path=$mri_path/ID$ID/onsets/new # EDIT #
-onsets_path=$mri_path/ID$ID/onsets/new/shift${onset_shift}
+onsets_path=$mri_path/ID$ID/onsets/new3/shift${onset_shift}
 
-epi_path_wo_bnum=$mri_path/ID$ID/epi_pre/epi_*
+epi_path_wo_bnum=$mri_path/ID$ID/epi_pre_2018/epi_*
 
 ### ATLAS
 ROI_r=4
-#atlas=$atlas_path/power_2011_MNI_r${ROI_r}_epi.nii.gz # EDIT #
-#atlas=$atlas_path/stim_conf_r${ROI_r}_epi.nii.gz
-atlas=$atlas_path/stim_conf_NEW12_extended_r${ROI_r}_epi.nii.gz
-#atlas=$mri_path/group/stim_conf_NEW12/MEMA/cmp_amp/cS1_conf_hit-CR_conf.nii.gz
+atlas=$atlas_path/power_2011_MNI_r${ROI_r}_epi.nii.gz # EDIT #
+
 
 ### EPIs
 valid_blocks_txt=$onsets_path/${ID}_valid_blocks.1D
@@ -91,16 +89,17 @@ valid_blocks_txt=$onsets_path/${ID}_valid_blocks.1D
 epi_file_wildcard=denoised/epi_*_denoised.nii.gz
 
 ### ONSETS
+cond_labels=(CR \
+			 near_miss \
+			 near_hit \
+			 supra_hit)
+
 cond_labels=(CR_conf \
 			 near_miss_conf \
-			 near_miss_unconf \
-			 near_hit_unconf \
 			 near_hit_conf \
-			 supra_hit_conf \
-			 no \
-			 yes \
-			 resp1_b6 \
-			 resp1_b7)
+			 supra_hit_conf)
+
+run_SPM_BIN=FALSE # EDIT # runs if "TRUE"
 
 for j in ${!cond_labels[@]}; do
 
@@ -113,7 +112,7 @@ done
 
 ### DIRECTORIES
 #gppi_path=$mri_path/ID$ID/gppi/gppi_cS1_NEW12 # EDIT #
-gppi_path=$mri_path/ID$ID/gppi/gppi_NOI_NEW
+gppi_path=$mri_path/ID$ID/gppi/gppi_power_all_cond2
 
 reg_path=$gppi_path/reg
 ts_path=$gppi_path/ts
@@ -219,34 +218,38 @@ for epi in ${epi_valid[@]}; do
 	# + BINARY approach (Cole et al., 2014, Nature Neurosci)
 	# --------------------------------------------------------------------------------
 
-	for j in ${!cond_labels[@]}; do
+	if [ "$run_SPM_BIN" = "TRUE" ]; then
 
-		# Output file names
-		reg_cond_SPM[j]=${reg_cond_prefix[j]}_0${block}${SPM_label}.1D
-		reg_cond_BIN[j]=${reg_cond_prefix[j]}_0${block}${BIN_label}.1D
+		for j in ${!cond_labels[@]}; do
 
-		cond_onsets_t[j]=${reg_cond_prefix[j]}_0${block}_t.1D
+			# Output file names
+			reg_cond_SPM[j]=${reg_cond_prefix[j]}_0${block}${SPM_label}.1D
+			reg_cond_BIN[j]=${reg_cond_prefix[j]}_0${block}${BIN_label}.1D
 
-		# Since timing_tool.py can't index .1D files' lines with {},
-		# we need a workaround (alternative: -per_run_file)
-		sed "${block_i}q;d" ${cond_onsets[j]} > ${cond_onsets_t[j]}
+			cond_onsets_t[j]=${reg_cond_prefix[j]}_0${block}_t.1D
 
-		# SPM approach - Create binary "psychological" regressor
-		timing_tool.py -timing ${cond_onsets_t[j]} \
-			   		   -tr $TR \
-					   -min_frac $min_TR_frac \
-					   -run_len $block_t \
-					   -stim_dur $reg_SPM_t \
-			   		   -timing_to_1D ${reg_cond_SPM[j]}
+			# Since timing_tool.py can't index .1D files' lines with {},
+			# we need a workaround (alternative: -per_run_file)
+			sed "${block_i}q;d" ${cond_onsets[j]} > ${cond_onsets_t[j]}
 
-		# Binary approach - Create binary "psychological" regressor
-		timing_tool.py -timing ${cond_onsets_t[j]} \
-			   		   -tr $TR \
-					   -min_frac $min_TR_frac \
-					   -run_len $block_t \
-					   -stim_dur $reg_BIN_t \
-			   		   -timing_to_1D ${reg_cond_BIN[j]}
-	done
+			# SPM approach - Create binary "psychological" regressor
+			timing_tool.py -timing ${cond_onsets_t[j]} \
+				   		   -tr $TR \
+						   -min_frac $min_TR_frac \
+						   -run_len $block_t \
+						   -stim_dur $reg_SPM_t \
+				   		   -timing_to_1D ${reg_cond_SPM[j]}
+
+			# Binary approach - Create binary "psychological" regressor
+			timing_tool.py -timing ${cond_onsets_t[j]} \
+				   		   -tr $TR \
+						   -min_frac $min_TR_frac \
+						   -run_len $block_t \
+						   -stim_dur $reg_BIN_t \
+				   		   -timing_to_1D ${reg_cond_BIN[j]}
+		done
+
+	fi
 
 	# FSL approach (O'Reilly et al., 2012, SCAN)
 	# --------------------------------------------------------------------------------
@@ -286,6 +289,8 @@ for epi in ${epi_valid[@]}; do
 
 	for j in ${!cond_labels[@]}; do
 
+	if [ "$run_SPM_BIN" = "TRUE" ]; then
+
 		# Section - Interaction Regressors
 		ts_deconv_cond[$j]=${ts_prefix}${ts_deconv_suffix_wo1D}${ts_cond_suffix[$j]} # Masked deconvolved time series
 
@@ -294,7 +299,8 @@ for epi in ${epi_valid[@]}; do
 		# Section - Interaction Regressors (without deconvolution)
 		# Binary approach
 		ts_cond_BIN[$j]=${ts_prefix}${BIN_label}${ts_cond_suffix[$j]}
-				
+	fi				
+
 		# FSL approach		
 		ts_cond_FSL[$j]=${ts_prefix}${FSL_label}${ts_cond_suffix[$j]}
 
@@ -333,8 +339,10 @@ for epi in ${epi_valid[@]}; do
 	1dtranspose $ts_dt.1D $ts_dt_t
 
 	# Deconvolution of seed time series (Tutorial code example)
-	3dTfitter -RHS $ts_dt_t \
-			  -FALTUNG $hrf $ts_deconv 012 -1
+	if [ "$run_SPM_BIN" = "TRUE" ]; then
+		3dTfitter -RHS $ts_dt_t \
+				  -FALTUNG $hrf $ts_deconv 012 -1
+	fi
 
 	# (-FALTUNG fset fpre pen fac) -> see https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTfitter.html
 
@@ -386,37 +394,41 @@ for epi in ${epi_valid[@]}; do
 
 	# Mask "neural" time series with condition regressor
 
-	# 3dcalc wants *.3D input
-	cp $ts_deconv.1D $ts_deconv.3D
-	
-	for j in ${!cond_labels[@]}; do
+	if [ "$run_SPM_BIN" = "TRUE" ]; then
 
-		3dcalc -a $ts_deconv.3D -b ${reg_cond_SPM[$j]} -expr 'a*b' -prefix ${ts_deconv_cond[$j]}
-	done
-
-	# Convolve with HRF to interaction regressor for each ROI
-
-	rm -rf ${ts_cond_SPM[@]}
-
-	# Loop conditions
-	for j in ${!cond_labels[@]}; do
-
-		# waver takes 1 column (t across rows) as input and gives same format as output
-		# Output is saved in a single array element
-		# Array element is written to file (1 ROI per row and t across columns)
+		# 3dcalc wants *.3D input
+		cp $ts_deconv.1D $ts_deconv.3D
 		
-		# Loop ROIs
-		for ((i=0; i<$(3dinfo -ni ${ts_deconv}.3D); i++)); do
+		for j in ${!cond_labels[@]}; do
 
-			int_cond_SPM[$i]=$(waver -input ${ts_deconv_cond[$j]}{$i}\' \
-								 	 -FILE $TR $hrf \
-								 	 -TR $TR \
-								 	 -numout $TR_num)
-
-			echo ${int_cond_SPM[$i]} >> ${ts_cond_SPM[$j]}
+			3dcalc -a $ts_deconv.3D -b ${reg_cond_SPM[$j]} -expr 'a*b' -prefix ${ts_deconv_cond[$j]}
 		done
 
-	done
+		# Convolve with HRF to interaction regressor for each ROI
+
+		rm -rf ${ts_cond_SPM[@]}
+
+		# Loop conditions
+		for j in ${!cond_labels[@]}; do
+
+			# waver takes 1 column (t across rows) as input and gives same format as output
+			# Output is saved in a single array element
+			# Array element is written to file (1 ROI per row and t across columns)
+			
+			# Loop ROIs
+			for ((i=0; i<$(3dinfo -ni ${ts_deconv}.3D); i++)); do
+
+				int_cond_SPM[$i]=$(waver -input ${ts_deconv_cond[$j]}{$i}\' \
+									 	 -FILE $TR $hrf \
+									 	 -TR $TR \
+									 	 -numout $TR_num)
+
+				echo ${int_cond_SPM[$i]} >> ${ts_cond_SPM[$j]}
+			done
+
+		done
+
+	fi
 
 	# ================================================================================
 	# INTERACTION REGRESSORS (WITHOUT DECONVOLUTION) - FSL & BINARY APPROACH
@@ -429,8 +441,12 @@ for epi in ${epi_valid[@]}; do
 	# Loop conditions
 	for j in ${!cond_labels[@]}; do
 
-		# Binary approach
-		3dcalc -a $ts_dt.3D -b ${reg_cond_BIN[$j]} -expr 'a*b' -prefix ${ts_cond_BIN[$j]}
+		if [ "$run_SPM_BIN" = "TRUE" ]; then
+
+			# Binary approach
+			3dcalc -a $ts_dt.3D -b ${reg_cond_BIN[$j]} -expr 'a*b' -prefix ${ts_cond_BIN[$j]}
+
+		fi
 		
 		# FSL approach
 		3dcalc -a $ts_dt.3D -b ${reg_cond_FSL[$j]} -expr 'a*b' -prefix ${ts_cond_FSL[$j]}
@@ -448,11 +464,15 @@ done # Loop - EPIs / Blocks
 
 for reg_cond_pre in ${reg_cond_prefix[@]}; do
 
-	# SPM approach
-	cat ${reg_cond_pre}_0[1-${block_max}]${SPM_label}.1D > ${reg_cond_pre}${SPM_label}.1D
+	if [ "$run_SPM_BIN" = "TRUE" ]; then
 
-	# Binary approach
-	cat ${reg_cond_pre}_0[1-${block_max}]${BIN_label}.1D > ${reg_cond_pre}${BIN_label}.1D
+		# SPM approach
+		cat ${reg_cond_pre}_0[1-${block_max}]${SPM_label}.1D > ${reg_cond_pre}${SPM_label}.1D
+
+		# Binary approach
+		cat ${reg_cond_pre}_0[1-${block_max}]${BIN_label}.1D > ${reg_cond_pre}${BIN_label}.1D
+
+	fi
 
 	# FSL approach
 	cat ${reg_cond_pre}_0[1-${block_max}]${FSL_label}.1D > ${reg_cond_pre}${FSL_label}.1D
@@ -472,15 +492,19 @@ done
 
 for ts_cond_suf in ${ts_cond_suffix[@]}; do
 
-	# SPM approach (Deconvolved)
-	3dTcat -TR $TR \
-		   -prefix ${ts_prefix_ID}${SPM_label}${ts_cond_suf} \
-			${ts_prefix_ID}_0[1-${block_max}]${SPM_label}${ts_cond_suf}
+	if [ "$run_SPM_BIN" = "TRUE" ]; then
 
-	# Binary approach (Without deconvolution)
-	3dTcat -TR $TR \
-		   -prefix ${ts_prefix_ID}${BIN_label}${ts_cond_suf} \
-			${ts_prefix_ID}_0[1-${block_max}]${BIN_label}${ts_cond_suf}
+		# SPM approach (Deconvolved)
+		3dTcat -TR $TR \
+			   -prefix ${ts_prefix_ID}${SPM_label}${ts_cond_suf} \
+				${ts_prefix_ID}_0[1-${block_max}]${SPM_label}${ts_cond_suf}
+
+		# Binary approach (Without deconvolution)
+		3dTcat -TR $TR \
+			   -prefix ${ts_prefix_ID}${BIN_label}${ts_cond_suf} \
+				${ts_prefix_ID}_0[1-${block_max}]${BIN_label}${ts_cond_suf}
+
+	fi
 
 	# FSL approach (Without deconvolution)
 	3dTcat -TR $TR \

@@ -8,21 +8,33 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
   
   # SETTINGS #
   
+  # Conditions
+  cond_str <- c('CR', 'near_miss', 'near_hit') # EDIT #
+  cond_str <- c('CR_conf', 'near_miss_unconf', 'near_hit_unconf')
+  #cond_str <- c('CR_conf', 'near_hit_unconf', 'near_hit_conf')
+  
   # Variance measure
   #var_measure <- 'ci'
   var_measure <- 'se'
   
   # P-value threshold
   p_thr <- c(0.05, 0.01)
+  p_label <- c('*','•')
   
   # Time points
   tp <- as.numeric(levels(crs_d$t))
+  
+  #x_labels <- seq(-6,12,1.5)
+  x_labels <- seq(-6,12,3)
+  
+  #ticks_inbetween <- seq(-4.5,10.5,1.5)
+  ticks_inbetween <- seq(-5.25,11.25,0.75)
   
   # Font size
   ttl_fs <- 2.0
   axs_ttl_fs <- 1.6
   axs_fs <- 1.4
-  p_fs <- 2
+  p_fs <- 2.4
   p_lgnd_fs <- 1.4
   lgnd_fs <- 1.4
   
@@ -91,20 +103,20 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
   for (i in levels(sn$t)) {
     print(i)
     # hit vs. miss
-    tstats <- t.test(sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == 'near_hit_conf' & sn$t == i]
-                     - sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == 'near_miss_conf' & sn$t == i])
+    tstats <- t.test(sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == cond_str[3] & sn$t == i]
+                     - sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == cond_str[2] & sn$t == i])
     print(tstats$p.value)
     p[i] <- tstats$p.value
     
     # CR vs. miss
-    tstats2 <- t.test(sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == 'CR_conf' & sn$t == i]
-                      - sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == 'near_miss_conf' & sn$t == i])
+    tstats2 <- t.test(sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == cond_str[1] & sn$t == i]
+                      - sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == cond_str[2] & sn$t == i])
     print(tstats2$p.value)
     p_CR_miss[i] <- tstats2$p.value
     
     # CR vs. hit
-    tstats3 <- t.test(sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == 'CR_conf' & sn$t == i]
-                      - sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == 'near_hit_conf' & sn$t == i])
+    tstats3 <- t.test(sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == cond_str[1] & sn$t == i]
+                      - sn$beta[sn$ROI==crs_d$ROI[1] & sn$cond == cond_str[3] & sn$t == i])
     print(tstats3$p.value)
     p_CR_hit[i] <- tstats3$p.value
   }
@@ -137,9 +149,9 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
   beta_min2max <- sum(abs(beta_range))
   
   matplot(tp,
-          data.frame(CR = crs_d$beta[crs_d$cond=='CR_conf'],
-                     miss = crs_d$beta[crs_d$cond=='near_miss_conf'],
-                     hit = crs_d$beta[crs_d$cond=='near_hit_conf']),
+          data.frame(CR = crs_d$beta[crs_d$cond==cond_str[1]],
+                     miss = crs_d$beta[crs_d$cond==cond_str[2]],
+                     hit = crs_d$beta[crs_d$cond==cond_str[3]]),
 #          type = 'o',
           type = 'l',
           lty = c(3:1),
@@ -161,10 +173,10 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
       yaxt = 's')
   
   axis(1,
-       at = seq(-6,12,3),
+       at = x_labels,
        cex.axis = axs_fs)
   
-  rug(x = seq(-4.5,10.5,3),
+  rug(x = ticks_inbetween,
       ticksize = -0.03,
       side = 1)
   
@@ -179,21 +191,22 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
          col = rgb(0.4,0.4,0.4,0.7))
   
   # Plot confidence interval band
+  # CR
   polygon(c(tp,rev(tp)),
-          c(crs_d$beta[crs_d$cond=='CR_conf'] - subset(crs_d[, var_measure], crs_d$cond == 'CR_conf'),
-            rev(crs_d$beta[crs_d$cond=='CR_conf'] + subset(crs_d[, var_measure], crs_d$cond == 'CR_conf'))),
+          c(crs_d$beta[crs_d$cond==cond_str[1]] - subset(crs_d[, var_measure], crs_d$cond == cond_str[1]),
+            rev(crs_d$beta[crs_d$cond==cond_str[1]] + subset(crs_d[, var_measure], crs_d$cond == cond_str[1]))),
           col = rgb(col[1,1], col[1,2], col[1,3], CI_alpha),
           border = NA)
-  
+  # Miss
   polygon(c(tp,rev(tp)),
-          c(crs_d$beta[crs_d$cond=='near_miss_conf'] - subset(crs_d[, var_measure], crs_d$cond == 'near_miss_conf'),
-            rev(crs_d$beta[crs_d$cond=='near_miss_conf'] + subset(crs_d[, var_measure], crs_d$cond == 'near_miss_conf'))),
+          c(crs_d$beta[crs_d$cond==cond_str[2]] - subset(crs_d[, var_measure], crs_d$cond == cond_str[2]),
+            rev(crs_d$beta[crs_d$cond==cond_str[2]] + subset(crs_d[, var_measure], crs_d$cond == cond_str[2]))),
           col = rgb(col[2,1], col[2,2], col[2,3], CI_alpha),
           border = NA)
-  
+  # Hit
   polygon(c(tp,rev(tp)),
-          c(crs_d$beta[crs_d$cond=='near_hit_conf'] - subset(crs_d[, var_measure], crs_d$cond == 'near_hit_conf'),
-            rev(crs_d$beta[crs_d$cond=='near_hit_conf'] + subset(crs_d[, var_measure], crs_d$cond == 'near_hit_conf'))),
+          c(crs_d$beta[crs_d$cond==cond_str[3]] - subset(crs_d[, var_measure], crs_d$cond == cond_str[3]),
+            rev(crs_d$beta[crs_d$cond==cond_str[3]] + subset(crs_d[, var_measure], crs_d$cond == cond_str[3]))),
           col = rgb(col[3,1], col[3,2], col[3,3], CI_alpha),
           border = NA)
   
@@ -217,9 +230,9 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
     
     text(tp[p < p_thr[1] & p >= p_thr[2]],
          beta_range[1] - 0.05*beta_min2max,
-         #(crs_d$beta[crs_d$cond=='near_hit_conf' & p < p_thr[1] & p >= p_thr[2]]
-         #+ crs_d$beta[crs_d$cond=='near_miss_conf' & p < p_thr[1] & p >= p_thr[2]])/2,
-         labels = '*',
+         #(crs_d$beta[crs_d$cond=='near_hit' & p < p_thr[1] & p >= p_thr[2]]
+         #+ crs_d$beta[crs_d$cond=='near_miss' & p < p_thr[1] & p >= p_thr[2]])/2,
+         labels = p_label[1],
          cex = p_fs)
     
     # if (!any(p < p_thr[2])) {
@@ -236,9 +249,9 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
     
     text(tp[p < p_thr[2]],
          beta_range[1] - 0.05*beta_min2max,
-         #(crs_d$beta[crs_d$cond=='near_hit_conf'  & p < p_thr[2]]
-         #+ crs_d$beta[crs_d$cond=='near_miss_conf'  & p < p_thr[2]])/2,
-         labels = '**',
+         #(crs_d$beta[crs_d$cond=='near_hit'  & p < p_thr[2]]
+         #+ crs_d$beta[crs_d$cond=='near_miss'  & p < p_thr[2]])/2,
+         labels = p_label[2],
          cex = p_fs)
     
     # text(max(tp)+1,
@@ -260,7 +273,7 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
            #beta_range[2] - 0.02*beta_min2max,
            #beta_range[1] - 0.29*beta_min2max,
            beta_range[1] + 0.04*beta_min2max,
-           labels = expression(paste('** ', italic(P), ' < 0.01', sep = '')),
+           labels = expression(paste('• ', italic(P), ' < 0.01', sep = '')),
            pos = 2,
            cex = p_lgnd_fs)
     }
@@ -271,9 +284,9 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
     
     text(tp[p_CR_miss < p_thr[1] & p_CR_miss >= p_thr[2]],
          beta_range[1] - 0.29*beta_min2max,
-         #(crs_d$beta[crs_d$cond=='CR_conf' & p_CR_miss < p_thr[1] & p_CR_miss >= p_thr[2]]
-         #+ crs_d$beta[crs_d$cond=='near_miss_conf' & p_CR_miss < p_thr[1] & p_CR_miss >= p_thr[2]])/2,
-         labels = '*',
+         #(crs_d$beta[crs_d$cond=='CR' & p_CR_miss < p_thr[1] & p_CR_miss >= p_thr[2]]
+         #+ crs_d$beta[crs_d$cond=='near_miss' & p_CR_miss < p_thr[1] & p_CR_miss >= p_thr[2]])/2,
+         labels = p_label[1],
          cex = p_fs,
          col = rgb(col[2,1], col[2,2], col[2,3]))
     
@@ -283,9 +296,9 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
     
     text(tp[p_CR_miss < p_thr[2]],
          beta_range[1] - 0.29*beta_min2max,
-         #(crs_d$beta[crs_d$cond=='CR_conf' & p_CR_miss < p_thr[2]]
-         #+ crs_d$beta[crs_d$cond=='near_miss_conf'  & p_CR_miss < p_thr[2]])/2,
-         labels = '**',
+         #(crs_d$beta[crs_d$cond=='CR' & p_CR_miss < p_thr[2]]
+         #+ crs_d$beta[crs_d$cond=='near_miss'  & p_CR_miss < p_thr[2]])/2,
+         labels = p_label[2],
          cex = p_fs,
          col = rgb(col[2,1], col[2,2], col[2,3]))
     
@@ -296,7 +309,7 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
     
     text(tp[p_CR_hit < p_thr[1] & p_CR_hit >= p_thr[2]],
          beta_range[1] - 0.17*beta_min2max,
-         labels = '*',
+         labels = p_label[1],
          cex = p_fs,
          col = rgb(col[3,1], col[3,2], col[3,3]))
     
@@ -306,7 +319,7 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
     
     text(tp[p_CR_hit < p_thr[2]],
          beta_range[1] - 0.17*beta_min2max,
-         labels = '**',
+         labels = p_label[2],
          cex = p_fs,
          col = rgb(col[3,1], col[3,2], col[3,3]))
     
@@ -327,7 +340,7 @@ plot_crs <- function(crs_d, sn, title_str, legend_pos) {
   print(t(p_adj2))
   
   legend(legend_pos,
-         legend = rev(c('Control', 'Unaware', 'Aware')),
+         legend = rev(cond_str),
          col = rev(colmap2[1:3]),
          lwd = 10,
          lty = 1,#rev(c(3:1)),

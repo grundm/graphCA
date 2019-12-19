@@ -1,4 +1,4 @@
-function (dt, db, dID, output_path, output_dir) {
+function (dt, db, dID, output_path, output_dir, TR_locked) {
 
 # SETTINGS ----------------------------------------------------------------
 
@@ -8,6 +8,9 @@ f_set$output_path <- output_path
 f_set$output_dir <- output_dir
 f_set$suffix <- '.1D'
 
+# New option to round onset times to next TR multiple
+f_set$TR_locked <- TR_locked
+f_set$TR <- 0.75
 
 # FUNCTIONS ---------------------------------------------------------------
 
@@ -15,7 +18,12 @@ write_onset <- function (onset_t,f_set) {
 
   # Write out NA if no values
   ifelse(!length(onset_t), out <- '*', out <- onset_t)
-  
+
+  # Rounds onset time to next TR multiple (e.g., 2s -> 2.25s if TR = 0.75s)
+  if (length(onset_t) & f_set$TR_locked) {
+    out <- ceiling(out/f_set$TR)*f_set$TR
+  }
+
   write(out, paste(f_set$path, '/', f_set$ID_str, '_', deparse(substitute(onset_t)), f_set$suffix, sep=''), ncolumns = ifelse(length(onset_t),length(onset_t),1), append = TRUE, sep='\t')
 
 }
@@ -73,7 +81,11 @@ for (i in dID$ID) {
   # Retrieve valid blocks
   valid_blocks <- as.numeric(unlist(strsplit(as.character(dID$valid_blocks[dID$ID == i]),"")))
   
+  f_set$TR_locked <- FALSE
+  
   write_onset(valid_blocks,f_set)
+  
+  f_set$TR_locked <- TR_locked
   
   # Loop blocks
   for (j in valid_blocks) {
@@ -100,6 +112,14 @@ for (i in dID$ID) {
     # (1) Stimulus onset for condition in general (given valid response), e.g. near_t
     # (2) Onset splitted for response (yes or no), e.g. near_hit_t
     # (3) Onsets splitted for response (yes/no) and confidence, e.g. near_hit_conf_t
+    
+    # ALL CONDITIONS - Confident and unconfident
+    
+    unconf_t <- dt_valid$stim_onset[dt_valid$resp2 <= 2]
+    conf_t <- dt_valid$stim_onset[dt_valid$resp2 >= 3]
+    
+    write_onset(unconf_t,f_set)
+    write_onset(conf_t,f_set)
     
     # NULL - Correct rejections & false alarms
     null_t <- dt_valid$stim_onset[dt_valid$stim_type == 0]
@@ -136,7 +156,11 @@ for (i in dID$ID) {
     near_miss_unconf_t <- dt_valid$stim_onset[dt_valid$stim_type == 1 & dt_valid$resp1 == 0 & dt_valid$resp2 <= 2]
     near_hit_unconf_t <- dt_valid$stim_onset[dt_valid$stim_type == 1 & dt_valid$resp1 == 1 & dt_valid$resp2 <= 2]
     
-    write_onset(null_t,f_set)
+    # NEAR - Independent of yes/no
+    near_conf_t <- dt_valid$stim_onset[dt_valid$stim_type == 1 & dt_valid$resp2 >= 3]
+    near_unconf_t <- dt_valid$stim_onset[dt_valid$stim_type == 1 & dt_valid$resp2 <= 2]
+    
+    write_onset(near_t,f_set) 
     
     write_onset(near_miss_t,f_set)
     write_onset(near_hit_t,f_set)
@@ -146,6 +170,9 @@ for (i in dID$ID) {
     
     write_onset(near_miss_unconf_t,f_set)
     write_onset(near_hit_unconf_t,f_set)
+    
+    write_onset(near_conf_t,f_set)
+    write_onset(near_unconf_t,f_set)
     
     # SUPRA - Hits and misses
     supra_t <- dt_valid$stim_onset[dt_valid$stim_type == 2]

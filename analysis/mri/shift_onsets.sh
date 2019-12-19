@@ -15,7 +15,7 @@ shift=-7.5
 ### DIRECTORIES
 mri_path=/data/pt_nro150/mri
 
-onsets_path=$mri_path/ID$ID/onsets/new
+onsets_path=$mri_path/ID$ID/onsets/new3
 
 ### FILES
 valid_blocks_file=${ID}_valid_blocks.1D

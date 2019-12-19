@@ -1,5 +1,8 @@
 #!/bin/bash
 # clusterize.sh ${glm_models[@]}
+#
+# Author: Martin Grund
+# Last upadte: April 30, 2019
 
 # ================================================================================
 # SETINGS
@@ -7,12 +10,14 @@
 
 ### FILTER CRITERIA
 
-pu=0.005000 	# as written in $clustSim_filename
+pu=0.000500 	# as written in $clustSim_filename
+#pu=0.001000 # EDIT #
 #pu=1.000e-5 	# 0.00001 uncorrected (per voxel) p-values
-p_clust_col=3 	# indicates column (5 -> .01)
+p_clust_col=7 	# indicates column: p(cluster) = 0.05
+#p_clust_col=6 	# indicates column: p(cluster) = 0.06
 
 # -NN 1  | alpha = Prob(Cluster >= given size)
-#  pthr  | .10000 .05000 .02000 .01000
+#  pthr  | .10000 .09000 .08000 .07000 .06000 .05000 .04000 .03000 .02000 .01000
 
 # ================================================================================
 # INPUT
@@ -25,8 +30,8 @@ glm_models=${1}
 mri_path=/data/pt_nro150/mri
 group_path=$mri_path/group
 
-### MONTE CARLO SIMULATION
-clustSim_filename=carlo/clustSim.NN1_bisided.1D
+clustSim_dir=ttest2 # EDIT #
+clustSim_suffix=_ttest_REML_clustsim.CSimA.NN1_bisided.1D
 
 # See (https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dClustSim.html):
 # bi-sided: where positive values and negative values above the
@@ -34,14 +39,14 @@ clustSim_filename=carlo/clustSim.NN1_bisided.1D
 
 
 ### GROUPTEST FILESs
-grouptest_dirname=MEMA
+grouptest_dirname=MEMA2 # EDIT #
 grouptest_file_wildcard=*_MEMA_REML.nii.gz
 
 # ================================================================================
 # OUTPUT
 # --------------------------------------------------------------------------------
 
-out_dirname=clust.005_k15
+out_dirname=clust2.0005.05 # EDIT #
 
 
 # ================================================================================
@@ -82,16 +87,13 @@ for glm_model in ${glm_models[@]}; do
 		t_value=${t_value_str#*=}
 
 		# Search for line with specified p-value and take last (5th) value for 0.01 alpha = Prob(Cluster >= given size)
-		clust_sizes=($(grep $pu $group_glm_path/$clustSim_filename))
+		clust_sizes=($(grep $pu $group_glm_path/$clustSim_dir/$grouptest_label$clustSim_suffix))
 		
 		clust_size=${clust_sizes[$p_clust_col-1]}
-		clust_size=15
+		#clust_size=15
 		printf "t-value >= %s; cluster size >= %s \n\n" "$t_value" "$clust_size"
 
 		# FILTER T-TEST DATA
-
-# 3dclust -1Dformat -nosum -1dindex 1 -1tindex 1 -2thresh -3.153 3.153 -dxyz=1 1.01 49 /data/pt_nro150/mri/group/stim_conf_NEW12/MEMA/near_hit_conf-near_miss_conf_0_MEMA_REML.nii.gz
-
 
 		3dclust -1thresh $t_value \
 				-1dindex 1 \
@@ -100,13 +102,15 @@ for glm_model in ${glm_models[@]}; do
 				-orient LPI \
 				-prefix $output_prefix.nii.gz \
 				-savemask $output_prefix\_order.nii.gz \
-				1.01 \
-				$clust_size \
+				-NN1 $clust_size \
 				$grouptest_file \
 				> $output_prefix\_table.1D
 
-		# Interactive cluster report
-		# 3dclust -1Dformat -nosum -1dindex 1 -1tindex 1 -2thresh -5.511 5.511 -dxyz=1 1.01 11 /nobackup/curie2/mgrund/GraphCA/mri/group/stim_resp3/MEMA/null_MEMA_REML.nii.gz
+		# -NN* excerpt from https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dClustSim.html
+		#
+		# "The clustering method only makes a difference at higher (less significant)
+		# values of pthr. At small values of pthr (more significant), all three
+		# clustering methods will give very similar results."
 
 	done # Loop - Grouptests
 

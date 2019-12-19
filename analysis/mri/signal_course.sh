@@ -5,7 +5,7 @@
 # SETTINGS
 # --------------------------------------------------------------------------------
 
-glm_model=stim_conf_TENT2 # EDIT #
+glm_model=all_cond_conf2_TENT # EDIT #
 
 # ================================================================================
 # INPUT
@@ -22,45 +22,55 @@ glm_path=$mri_path/ID$ID/glm/$glm_model
 group_path=$mri_path/group
 
 ### GLM FILE
-glm_file=$glm_path/${ID}_glm_REML.nii.gz
+#glm_file=$glm_path/${ID}_glm_REML.nii.gz
+glm_file=$glm_path/${ID}_glm_REML_betas.nii.gz # EDIT #
 
-coef_brick_wildcard=*_Coef
+#coef_brick_wildcard="_Coef"
+coef_brick_wildcard="#" # EDIT #
 
 ### CONDITION LABELS
+cond_labels=(CR \
+			 near_miss \
+			 near_hit)
+
 cond_labels=(CR_conf \
 			 near_miss_conf \
-			 near_hit_conf)
+			 near_miss_unconf \
+			 near_hit_unconf \
+			 near_hit_conf \
+			 supra_hit_conf)
 
 ### ROI
 sphere_r=4 # EDIT #
 
-atlas_coords=$mri_path/atlas/stim_conf_NEW12_coords.1D
+#atlas_coords=$mri_path/atlas/all_cond3_coords.1D # EDIT #
+atlas_coords=$mri_path/atlas/all_cond_conf2_coords.1D
 
-ROIs=(cS1 \
-	  cS2a \
-	  lPCUN1 \
-	  lIPL1 \
-	  lIFG \
-	  rSPL \
-	  lPCC \
-	  rIOG \
-	  lINS1 \
-	  lACC \
-	  iS2 \
-	  rMTG \
-	  rIFG \
-	  rMFG)
+# all_cond3_coords.1D
+ROIs=(lINS1 \
+		lIPS1 \
+		rPCUN \
+		lNAC \
+		lIFG \
+		rINS \
+		rIPS \
+		lPCUN \
+		cS2a \
+		lIPS2 \
+		cS2b \
+		lINS2 \
+		iS2 \
+		lSMA)
 
-ROIs=(rINS \
-	  cS1b \
-	  raINS \
-	  rpINS \
-	  A4b \
-	  A11 \
-	  A4a \
-	  A12)
-
-ROIs=(lPCUN2)
+# all_cond_conf2_coords.1D
+ROIs=(PCUN \
+	  lINS \
+	  lIPS1 \
+	  lNAC \
+	  lIPS2 \
+	  rACC \
+	  lPu \
+	  rPu)
 
 # ================================================================================
 # OUTPUT
@@ -93,7 +103,7 @@ if [ -d "$glm_path" ]; then
 
 			# Create brick label array for current condition
 			# Loops array with GLM labels and filters for current condition label and beta coefficient brick
-			coef_labels=($(for i in ${glm_labels[@]}; do echo $i | grep $cond_label#* | grep -v \\- | grep *$coef_brick_wildcard; done))
+			coef_labels=($(for i in ${glm_labels[@]}; do echo $i | grep $cond_label | grep -v \\- | grep $coef_brick_wildcard; done))
 
 			echo ${coef_labels[@]}
 

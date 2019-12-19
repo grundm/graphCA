@@ -1,9 +1,12 @@
 #!/bin/bash
 # Get T1 file names
+#
+# Author: Martin Grund
+# Last update: April 30, 2019
 
-########################################
-### SETTINGS ###########################
-########################################
+# ================================================================================
+# SETINGS
+# --------------------------------------------------------------------------------
 
 ID_base=ID
 ID_min=01
@@ -12,21 +15,31 @@ ID_max=47
 T1_wildcards=(*_mprage_* *_MPRAGE_* *_mpr_*)
 #T1_wildcards=(*mp2rage*)
 
-output_file=mprage.txt
+# ================================================================================
+# INPUT
+# --------------------------------------------------------------------------------
+
+# DICOM path
+mri_path=/data/p_nro150/probands
+
+# Participant brain data base path
+bdb_path=/a/probands/bdb
+
+# ================================================================================
+# OUTPUT
+# --------------------------------------------------------------------------------
+
+output_dir=/data/pt_nro150/mri
+
+output_file=mprage.txt # EDIT #
 #output_file=mp2rage.txt
 
-### DIRECTORIES
-
-mri_path=/nobackup/curie2/mgrund/GraphCA/mri
-
-bdb_path=/afs/cbs.mpg.de/probands/bdb
-
-########################################
-### GET FILENAMES FROM DATABASE ########
-########################################
+# ================================================================================
+# GET FILENAMES FROM DATABASE 
+# --------------------------------------------------------------------------------
 
 # Redirect stdout & stderr to output file
-exec > $mri_path/$output_file 2>&1
+exec > $output_dir/$output_file 2>&1
 
 # Loop IDs
 for ID in $(eval echo "{$ID_min..$ID_max}"); do

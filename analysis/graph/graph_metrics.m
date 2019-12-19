@@ -9,15 +9,11 @@ mat = load_conmat;
 
 %% LOAD
 mri_path = '/data/pt_nro150/mri';
-
-% Task-relevant network:
-gppi_group_path = [mri_path '/group/gppi_NOI_NEW/glm_FSL'];
-load([gppi_group_path '/conmat19.mat'])
-
-% Whole-brain network:
-
+% gppi_group_path = [mri_path '/group/gppi_power_all_cond_conf/glm_FSL'];
+gppi_group_path = [mri_path '/group/gppi_power_all_cond2/glm_FSL'];
 % gppi_group_path = [mri_path '/group/gppi_power_r4/glm_FSL'];
-% load([gppi_group_path '/conmat.mat'])
+
+load([gppi_group_path '/conmat.mat'])
 
 %% SAVE
 
@@ -27,17 +23,14 @@ save([gppi_group_path '/conmat.mat']', 'mat');
 
 %% COMPUTE NORMALIZED GRAPH METRICS FOR MULTIPLE THRESHOLDS
 
-mat_thr = 0.20:0.05:0.95;
-
-% Whole-brain network:
-% mat_thr = 0.10:0.10:0.9;
+mat_thr = 0.05:0.05:0.40;
 
 rnd_iter = 100;
 rnd_rewire_i = 5;
 
 d = parrun_graph(mat,mat_thr,rnd_iter,rnd_rewire_i);
 
-save([gppi_group_path '/graph_metrics_conmat19_r100_20-95.mat'], 'd', '-v7.3');
+save([gppi_group_path '/graph_metrics_conmat_r100_05-40.mat'], 'd', '-v7.3');
 
 %% COMPARE CONDITIONS
 
@@ -48,11 +41,92 @@ c = cmp_cond(d, cond_ind, CI_width);
 
 %% SAVE GRAPH ANALYTICAL RESULTS
 
-load([gppi_group_path '/graph_metrics_conmat19_r100_20-95.mat'])
+load([gppi_group_path '/graph_metrics_conmat_r100_05-40.mat']);
 
 %% PLOT GRAPH METRICS
 
 plot_metrics(c);
+
+
+%% FDR-correction
+
+combinations = [1 2; 1 3; 2 3];
+
+for j = 1:3
+    for i = 1:8
+        p_Q(j,i) = c.signrank(i).Q(combinations(j,1),combinations(j,2));
+        p_P(j,i) = c.signrank(i).P_mean(combinations(j,1),combinations(j,2));
+        p_C(j,i) = c.signrank(i).C_mean(combinations(j,1),combinations(j,2));
+        p_L(j,i) = c.signrank(i).L(combinations(j,1),combinations(j,2));
+        
+    end
+end
+
+[h.Q, crit_p.Q, adj_ci_cvrg.Q, adj_p.Q] = fdr_bh(p_Q);
+[h.P, crit_p.P, adj_ci_cvrg.P, adj_p.P] = fdr_bh(p_P);
+[h.C, crit_p.C, adj_ci_cvrg.C, adj_p.C] = fdr_bh(p_C);
+[h.L, crit_p.L, adj_ci_cvrg.L, adj_p.L] = fdr_bh(p_L);
+
+%% Bayes Factor
+
+prior=sqrt(2)/2;
+%prior=.4;
+
+for i = 1:length(d)
+    
+    [bf10.Q(i),p.Q(i)] = bf.ttest(d(i).group.gGraph.all.Q(:,3),d(i).group.gGraph.all.Q(:,2),'scale',prior);
+    
+    [bf10.P_mean(i),p.P_mean(i)] = bf.ttest(d(i).group.gGraph.all.P_mean(:,3), d(i).group.gGraph.all.P_mean(:,2),'scale',prior);
+    
+    [bf10.C_mean(i),p.C_mean(i)] = bf.ttest(d(i).group.gGraph.all.C_mean(:,3), d(i).group.gGraph.all.C_mean(:,2),'scale',prior);
+    
+    [bf10.L(i),p.L(i)] = bf.ttest(d(i).group.gGraph.all.L(:,3), d(i).group.gGraph.all.L(:,2),'scale',prior);        
+    
+end
+
+%%
+
+fig1 = figure;
+
+BF_boundaries = [1,3];
+BF_label_str = {'Anecdotal', 'Moderate'};
+
+BF_max = 6;
+
+subplot(1,4,1);
+
+plot(c.thr*100,1./bf10.Q);
+
+hline(BF_boundaries,'r-',BF_label_str)
+
+ylim([0 BF_max])
+
+subplot(1,4,2);
+
+plot(c.thr*100,1./bf10.P_mean);
+
+hline(BF_boundaries,'r-',BF_label_str)
+
+ylim([0 BF_max])
+
+subplot(1,4,3);
+
+plot(c.thr*100,1./bf10.C_mean);
+
+hline(BF_boundaries,'r-',BF_label_str)
+
+ylim([0 BF_max])
+
+subplot(1,4,4);
+
+plot(c.thr*100,1./bf10.L);
+
+hline(BF_boundaries,'r-',BF_label_str)
+
+ylim([0 BF_max])
+
+
+%bf01 = 1./bf10
 
 %% Probability of superiority PS
 

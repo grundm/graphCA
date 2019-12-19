@@ -9,7 +9,7 @@
 # --------------------------------------------------------------------------------
 
 ### GLM MODELS
-glm_models=(stim_conf stim_conf_TENT) # EDIT #
+glm_models=(all_cond2) # EDIT #
 
 ### GLM SETTINGS
 #CPUs=$(( $(nproc) - 1))
@@ -24,12 +24,7 @@ block_TR=1110
 pnum=6 # -polort
 
 # Response model
-#resp_model='GAM'
-#resp_model='TENT(0,12,9)'
-# HRF starts 0s after stimulus/response onset, lasts for 12s and has 9 basis tents (12/(9-1)=1.5s spaced) 
-resp_model='TENT(-6,12,13)'
-# starts 6s before stimulus/response onset, lasts for 12s after stimulus onset and has 13 basis tents (18/(13-1)=1.5s spaced) 
-
+resp_model='GAM'
 
 # ================================================================================
 # INPUT
@@ -40,15 +35,16 @@ ID=${1}
 
 ### DIRECTORIES
 
-#mri_path=/nobackup/curie2/mgrund/GraphCA/mri
 mri_path=/data/pt_nro150/mri
 
-anat_path=$mri_path/ID$ID/T1
+#anat_path=$mri_path/ID$ID/T1
+anat_path=$mri_path/ID$ID/T1_2018
 
-epi_path_wo_bnum=$mri_path/ID$ID/epi_pre/epi_*
+#epi_path_wo_bnum=$mri_path/ID$ID/epi_pre/epi_*
+epi_path_wo_bnum=$mri_path/ID$ID/epi_pre_2018/epi_*
 
-#onsets_path=$mri_path/ID$ID/onsets/new
-onsets_path=$mri_path/ID$ID/onsets/new/shift${onset_shift}
+onsets_path=$mri_path/ID$ID/onsets/new3/shift${onset_shift} # EDIT #
+#onsets_path=$mri_path/ID$ID/onsets/TRlocked3/shift${onset_shift}
 
 ### EPI FILES
 
@@ -231,9 +227,10 @@ for glm_model in ${glm_models[@]}; do
 
 	case $glm_model in
 
-	stim_conf)
 
-		# 1 regressor for each stimulus condition (near splitted by confidence) (CR_conf, miss_conf, miss_unconf, hit_unconf, hit_conf, supra_hit_conf)
+	all_cond2)
+
+		# 1 regressor for each stimulus condition (CR, near_miss, near_hit, supra_hit)
 		# 1 regressor for each response onset (resp1, resp2)
 
 		if [ -f "$valid_blocks_txt" ]; then
@@ -247,56 +244,45 @@ for glm_model in ${glm_models[@]}; do
 					 -censor $mc_censor_valid \
 					 -polort $pnum \
 					 -local_times \
-					 -num_stimts 8 \
-					 -stim_times 1 $onsets_path/${ID}_CR_conf_t_shift${onset_shift}.1D $resp_model -stim_label 1 CR_conf \
-					 -stim_times 2 $onsets_path/${ID}_near_miss_conf_t_shift${onset_shift}.1D $resp_model -stim_label 2 near_miss_conf \
-					 -stim_times 3 $onsets_path/${ID}_near_miss_unconf_t_shift${onset_shift}.1D $resp_model -stim_label 3 near_miss_unconf \
-					 -stim_times 4 $onsets_path/${ID}_near_hit_unconf_t_shift${onset_shift}.1D $resp_model -stim_label 4 near_hit_unconf \
-					 -stim_times 5 $onsets_path/${ID}_near_hit_conf_t_shift${onset_shift}.1D $resp_model -stim_label 5 near_hit_conf \
-					 -stim_times 6 $onsets_path/${ID}_supra_hit_conf_t_shift${onset_shift}.1D $resp_model -stim_label 6 supra_hit_conf \
-					 -stim_times 7 $onsets_path/${ID}_resp1_t_shift${onset_shift}.1D $resp_model -stim_label 7 resp1 \
-					 -stim_times 8 $onsets_path/${ID}_resp2_t_shift${onset_shift}.1D $resp_model -stim_label 8 resp2 \
+					 -num_stimts 6 \
+					 -stim_times 1 $onsets_path/$ID\_CR_t_shift${onset_shift}.1D $resp_model -stim_label 1 CR \
+					 -stim_times 2 $onsets_path/$ID\_near_miss_t_shift${onset_shift}.1D $resp_model -stim_label 2 near_miss \
+					 -stim_times 3 $onsets_path/$ID\_near_hit_t_shift${onset_shift}.1D $resp_model -stim_label 3 near_hit \
+					 -stim_times 4 $onsets_path/$ID\_supra_hit_t_shift${onset_shift}.1D $resp_model -stim_label 4 supra_hit \
+					 -stim_times 5 $onsets_path/$ID\_resp1_t_shift${onset_shift}.1D $resp_model -stim_label 5 resp1 \
+					 -stim_times 6 $onsets_path/$ID\_resp2_t_shift${onset_shift}.1D $resp_model -stim_label 6 resp2 \
 					 -ortvec $nuisance_reg_valid nuisance_reg \
-					 -num_glt 17 \
-					 -gltsym 'SYM: near_hit_conf -near_miss_conf' -glt_label 1 near_hit_conf-near_miss_conf \
-					 -gltsym 'SYM: supra_hit_conf -near_hit_conf' -glt_label 2 supra_hit_conf-near_hit_conf \
-					 -gltsym 'SYM: near_hit_conf -near_hit_unconf' -glt_label 3 near_hit_conf-near_hit_unconf \
-					 -gltsym 'SYM: near_hit_unconf -near_miss_unconf' -glt_label 4 near_hit_unconf-near_miss_unconf \
-					 -gltsym 'SYM: near_miss_unconf -near_miss_conf' -glt_label 5 near_miss_unconf-near_miss_conf \
-					 -gltsym 'SYM: supra_hit_conf -CR_conf' -glt_label 6 supra_hit_conf-CR_conf \
-					 -gltsym 'SYM: near_hit_conf -CR_conf' -glt_label 7 near_hit_conf-CR_conf \
-					 -gltsym 'SYM: near_hit_unconf -CR_conf' -glt_label 8 near_hit_unconf-CR_conf \
-					 -gltsym 'SYM: near_miss_unconf -CR_conf' -glt_label 9 near_miss_unconf-CR_conf \
-					 -gltsym 'SYM: near_miss_conf -CR_conf' -glt_label 10 near_miss_conf-CR_conf \
-					 -gltsym 'SYM: 0.25*near_hit_conf +0.25*near_hit_unconf +0.25*near_miss_unconf +0.25*near_miss_conf' -glt_label 11 near_mean \
-					 -gltsym 'SYM: 0.5*near_hit_conf +0.5*near_hit_unconf -0.5*near_miss_unconf -0.5*near_miss_conf' -glt_label 12 near_hit_mean-near_miss_mean \
-					 -gltsym 'SYM: 0.5*near_hit_conf +0.5*near_miss_conf -0.5*near_hit_unconf -0.5*near_miss_unconf' -glt_label 13 near_conf_mean-near_unconf_mean \
-					 -gltsym 'SYM: 0.2*near_hit_conf +0.2*near_hit_unconf +0.2*near_miss_unconf +0.2*near_miss_conf +0.2*supra_hit_conf' -glt_label 14 stim_mean \
-					 -gltsym 'SYM: 0.2*near_hit_conf +0.2*near_hit_unconf +0.2*near_miss_unconf +0.2*near_miss_conf +0.2*supra_hit_conf -CR_conf' -glt_label 15 stim_mean-CR_conf \
-					 -gltsym 'SYM: 0.5*resp1 +0.5*resp2' -glt_label 16 resp_mean \
-					 -gltsym 'SYM: '"$base_model_valid"'' -glt_label 17 baseline \
+					 -num_glt 5 \
+					 -gltsym 'SYM: near_hit -near_miss' -glt_label 1 near_hit-near_miss \
+					 -gltsym 'SYM: near_miss -CR' -glt_label 2 near_miss-CR \
+					 -gltsym 'SYM: near_hit -CR' -glt_label 3 near_hit-CR \
+					 -gltsym 'SYM: supra_hit -CR' -glt_label 4 supra_hit-CR \
+					 -gltsym 'SYM: supra_hit -near_hit' -glt_label 5 supra_hit-near_hit \
 					 -x1D $glm_path/$glm_model/${ID}_glm.xmat.1D \
 					 -x1D_stop
-
 
 		# Model Serial Correlations in the Residuals
 
 		3dREMLfit -input "`echo ${epi_valid[@]}`" \
 				  -mask $epi_brain_mask \
 				  -matrix $glm_path/$glm_model/${ID}_glm.xmat.1D \
-				  -rout -fout -tout \
-				  -Rbuck $glm_path/$glm_model/${ID}_glm_REML.nii.gz \
-				  -Rerrts $glm_path/$glm_model/${ID}_glm_errts_REML.nii.gz \
-				  -Rvar $glm_path/$glm_model/${ID}_glm_REMLvar.nii.gz \
-				  -Obuck $glm_path/$glm_model/${ID}_glm_OLSQ.nii.gz
+				  -tout -nobout \
+				  -Rbuck $glm_path/$glm_model/${ID}_glm_REML.nii.gz
 
 		fi
 
 	;;
 
-	stim_conf_TENT)
 
-		# 1 regressor for each stimulus condition (near splitted by confidence) (CR_conf, miss_conf, miss_unconf, hit_unconf, hit_conf, supra_hit_conf)
+	all_cond_conf_only)
+
+		# 1 regressor for each stimulus condition
+		# 1 regressor for each response onset (resp1, resp2)
+
+		# AFNI recommends for 3dMEMA 
+		# - No mask: Increases input file size and hence output file size insanely, individual brain masks were dilated
+		# - 3dREMLfit: Check
+		# https://afni.nimh.nih.gov/sscc/gangc/MEMA.html
 
 		if [ -f "$valid_blocks_txt" ]; then
 
@@ -310,50 +296,33 @@ for glm_model in ${glm_models[@]}; do
 					 -polort $pnum \
 					 -local_times \
 					 -num_stimts 6 \
-					 -stim_times 1 $onsets_path/${ID}_CR_conf_t_shift${onset_shift}.1D $resp_model -stim_label 1 CR_conf \
-					 -stim_times 2 $onsets_path/${ID}_near_miss_conf_t_shift${onset_shift}.1D $resp_model -stim_label 2 near_miss_conf \
-					 -stim_times 3 $onsets_path/${ID}_near_miss_unconf_t_shift${onset_shift}.1D $resp_model -stim_label 3 near_miss_unconf \
-					 -stim_times 4 $onsets_path/${ID}_near_hit_unconf_t_shift${onset_shift}.1D $resp_model -stim_label 4 near_hit_unconf \
-					 -stim_times 5 $onsets_path/${ID}_near_hit_conf_t_shift${onset_shift}.1D $resp_model -stim_label 5 near_hit_conf \
-					 -stim_times 6 $onsets_path/${ID}_supra_hit_conf_t_shift${onset_shift}.1D $resp_model -stim_label 6 supra_hit_conf \
+					 -stim_times 1 $onsets_path/$ID\_CR_conf_t_shift${onset_shift}.1D $resp_model -stim_label 1 CR_conf \
+					 -stim_times 2 $onsets_path/$ID\_near_miss_conf_t_shift${onset_shift}.1D $resp_model -stim_label 2 near_miss_conf \
+					 -stim_times 3 $onsets_path/$ID\_near_hit_conf_t_shift${onset_shift}.1D $resp_model -stim_label 3 near_hit_conf \
+					 -stim_times 4 $onsets_path/$ID\_supra_hit_conf_t_shift${onset_shift}.1D $resp_model -stim_label 4 supra_hit_conf \
+					 -stim_times 5 $onsets_path/$ID\_resp1_t_shift${onset_shift}.1D $resp_model -stim_label 5 resp1 \
+					 -stim_times 6 $onsets_path/$ID\_resp2_t_shift${onset_shift}.1D $resp_model -stim_label 6 resp2 \
 					 -ortvec $nuisance_reg_valid nuisance_reg \
-					 -num_glt 9 \
-					 -gltsym 'SYM: near_hit_conf[4..13] -near_miss_conf[4..13]' -glt_label 1 near_hit_conf-near_miss_conf \
-					 -gltsym 'SYM: supra_hit_conf[4..13] -near_hit_conf[4..13]' -glt_label 2 supra_hit_conf-near_hit_conf \
-					 -gltsym 'SYM: supra_hit_conf[4..13] -CR_conf[4..13]' -glt_label 3 supra_hit_conf-CR_conf \
-					 -gltsym 'SYM: near_hit_conf[4..13] -CR_conf[4..13]' -glt_label 4 near_hit_conf-CR_conf \
-					 -gltsym 'SYM: near_miss_conf[4..13] -CR_conf[4..13]' -glt_label 5 near_miss_conf-CR_conf \
-					 -gltsym 'SYM: 0.5*near_hit_conf[4..13] +0.5*near_miss_conf[4..13]' -glt_label 6 near_conf_mean \
-					 -gltsym 'SYM: 0.5*near_hit_conf[4..13] +0.5*near_miss_conf[4..13] -CR_conf[4..13]' -glt_label 7 near_conf_mean \
-					 -gltsym 'SYM: 0.2*near_hit_conf[4..13] +0.2*near_hit_unconf[4..13] +0.2*near_miss_unconf[4..13] +0.2*near_miss_conf[4..13] +0.2*supra_hit_conf[4..13]' -glt_label 8 stim_mean \
-					 -gltsym 'SYM: 0.2*near_hit_conf[4..13] +0.2*near_hit_unconf[4..13] +0.2*near_miss_unconf[4..13] +0.2*near_miss_conf[4..13] +0.2*supra_hit_conf[4..13] -CR_conf[4..13]' -glt_label 9 stim_mean-CR_conf \
+					 -num_glt 5 \
+					 -gltsym 'SYM: near_hit_conf -near_miss_conf' -glt_label 1 near_hit_conf-near_miss_conf \
+					 -gltsym 'SYM: near_miss_conf -CR_conf' -glt_label 2 near_miss_conf-CR_conf \
+					 -gltsym 'SYM: near_hit_conf -CR_conf' -glt_label 3 near_hit_conf-CR_conf \
+					 -gltsym 'SYM: supra_hit_conf -CR_conf' -glt_label 4 supra_hit_conf-CR_conf \
+					 -gltsym 'SYM: supra_hit_conf -near_hit_conf' -glt_label 5 supra_hit_conf-near_hit_conf \
 					 -x1D $glm_path/$glm_model/${ID}_glm.xmat.1D \
 					 -x1D_stop
-
-# Pre-stimulus TENTs: [0..3]
-# Post-stimulus TENTs: [4..13]
-# Excluded response/button onsets, because I want to model the pre-stimulus time that would overlap with these regressors:
-#					 -stim_times 7 $onsets_path/${ID}_resp1_t_shift${onset_shift}.1D $resp_model -stim_label 7 resp1 \
-#					 -stim_times 8 $onsets_path/${ID}_resp2_t_shift${onset_shift}.1D $resp_model -stim_label 8 resp2 \
-
-
 
 		# Model Serial Correlations in the Residuals
 
 		3dREMLfit -input "`echo ${epi_valid[@]}`" \
 				  -mask $epi_brain_mask \
 				  -matrix $glm_path/$glm_model/${ID}_glm.xmat.1D \
-				  -rout -fout -tout \
+				  -tout -nobout \
 				  -Rbuck $glm_path/$glm_model/${ID}_glm_REML.nii.gz
-
 
 		fi
 
 	;;
-
-
-
-
 
 	esac
 

@@ -102,7 +102,7 @@ ID=${1}
 epi_file=${2}
 
 ### DIRECTORIES
-code_path=/nobackup/curie2/mgrund/code/graphca/mri
+code_path=/data/pt_nro150/graphca/mri
 
 mri_path=/data/pt_nro150/mri
 

@@ -5,10 +5,11 @@ cond_ind = 1:length(c.cond);
 cond_ind = 1:4; %[1,3];
 cond_ind = [3,1,2,4];
 cond_ind = [2,1,3];
+cond_ind = [3,2,1];
 
 % Significance asteriks
-cond_pair = [1,2];
-p_thr = .05;
+cond_pair = [2,3];
+p_thr = .01;
 
 metric_str = {'Q', 'P_mean', 'C_mean', 'L'};
 
@@ -23,10 +24,11 @@ axis_label_size = 10;
 
 axis_size = 8;
 
-legend_location = 'SouthWest';
+legend_location = 'SouthEast';
 
 legend_labels = {'Miss','Hit','CR','Supra','Seed'};
 legend_labels = {'Unaware','Aware','Control','Supra','Seed'};
+legend_labels = {'CR', 'Miss', 'Hit', 'Supra', 'Baseline'};
 legend_labels = legend_labels(cond_ind);
 
 legend_size = 9;
@@ -37,11 +39,18 @@ line_width = 2;
 
 % Axis range
 
-% NOI
-y_range = [0.80 1.08;...
-           0.80 1.15;...
-           0.85 1.20;...
-           0.97 1.04];
+% Power (5-40%; N = 31)
+y_range = [1.03 1.37;...
+           0.85 1.00;...
+           0.83 1.05;...
+           0.995 1.017];
+
+
+% % NOI
+% y_range = [0.80 1.08;...
+%            0.80 1.15;...
+%            0.85 1.20;...
+%            0.97 1.04];
 
 % % Power (5-30%)
 % y_range = [1.05 1.35;...
@@ -72,15 +81,17 @@ y_range = [0.80 1.08;...
 %        141,211,199;         % CR
 %        251,128,114]./255;   % Supra
 
-col = [141,160,203;         % Miss      
-       252,141,98;          % Hit
-       102,194,165;         % CR
-       251,128,114]./255;   % Supra
+col = [102,194,165;         % CR
+       141,160,203;         % Miss      
+       252,141,98;          % Hit       
+       251,128,114;         % Supra
+       0,0,0]./255;         % ROI  
    
 
 col = col(cond_ind,:);
 
-x_tick_rotation = 55;
+% x_tick_rotation = 55;
+x_tick_rotation = 0;
 
 %% Plot sub-figures
 
@@ -135,11 +146,11 @@ end
 function plot_pval(fig,c,metric_str,cond_pair,p_thr)
 
     for i = 1:length(c.thr)
-        pval = c.signrank(i).(metric_str)(cond_pair);
+        pval = c.signrank(i).(metric_str)(cond_pair(1),cond_pair(2));
         
         if pval <= p_thr
             % Plot asterik for current threshold (x) between condition
             % pairs (y)
-            plot(fig,c.thr(i)*100,mean(c.(metric_str)(i,cond_pair)),'k*','LineWidth',1);
+            plot(fig,c.thr(i)*100,mean(c.(metric_str)(i,[cond_pair(1),cond_pair(2)])),'k*','LineWidth',1);
         end
     end

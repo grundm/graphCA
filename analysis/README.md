@@ -7,7 +7,7 @@ Directory: behavior/
 - nt_trials.txt - behavioral data (1 trial each row)
 - behav.R - main script to preprocess behavioral data and create stimulus onset files
 - plot_detection.R - script to plot detection rates
-- plot_conf.R - script to plot confidence ratings
+- plot_conf_bar.R - script to plot confidence ratings
 - intensity.R - script to analyze applied intensity of electrical pulses
 
 ## MRI data analysis
@@ -16,9 +16,13 @@ Directory: mri/
 
 ### Software requirements
 
-- AFNI
-- FSL
-- FreeSurfer
+- dcm2nii 20160222
+- AFNI 18.2.17 (Preprocessing) & 19.1.05 (GLM)
+- FSL 5.0.11
+- FreeSurfer 6.0.0
+- R 3.6.0
+- R package: snow 0.4-3; reshape
+
 
 ### Preprocessing
 
@@ -41,17 +45,11 @@ Directory: mri/
 #### Individual level
 
 1. glm.sh<sup>*</sup> - model BOLD amplitude contrasts and signal time course
-2. err_smooth.sh<sup>*</sup> - determine spatial error smoothness
 
 #### Group level
 
 1. grouptest.sh - mixed-effects meta analysis (3dMEMA) of BOLD amplitude contrasts
-2. monte_carlo.sh - Monte Carlo simulation based on spatial error smoothness
-3. clusterize.sh - filter for cluster size threshold
-
-### BOLD signal time course
-
-1. plot_signal_course.R - plots signal time course for multiple ROIs
+2. clusterize.sh - filter for cluster size threshold
 
 ### gPPI (generalized Psychophysiological Interaction)
 
@@ -70,10 +68,12 @@ Directory: graph/
 
 - Brain Connectivity Toolbox 2017-01-15 (https://sites.google.com/site/bctnet/)<sup>1</sup>
 - boundedline.m (https://de.mathworks.com/matlabcentral/fileexchange/27485-boundedline-m)<sup>1</sup>
+- fdr_bh.m (https://www.mathworks.com/matlabcentral/fileexchange/27418-fdr_bh)<sup>1</sup>
+- bayesFactor (https://klabhub.github.io/bayesFactor/)<sup>1</sup>
+- hline_vline (https://www.mathworks.com/matlabcentral/fileexchange/1039-hline-and-vline)<sup>1</sup>
 
 <sup>1</sup>Part of repository (see "assets/")
 
-### Graph metrics & connectivity matrix
+### Graph metrics
 
 1. graph_metrics.m - main script to run graph theory analysis
-2. plot_NOI.m - plots matrix of network of interest

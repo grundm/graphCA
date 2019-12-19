@@ -4,11 +4,10 @@
 # Input variable
 ID=${1}
 
-#mri_path=/nobackup/curie2/mgrund/GraphCA/mri
 mri_path=/data/pt_nro150/mri
 epi_path=${mri_path}/ID$ID/nii/epi
 
-code_path=/nobackup/curie2/mgrund/code/graphca/mri
+code_path=/data/pt_nro150/graphca/mri
 
 for epi_file in $epi_path/epi*.nii.gz; do
 

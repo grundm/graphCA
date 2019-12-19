@@ -27,29 +27,30 @@ ID=${1}
 ### DIRECTORIES
 mri_path=/data/pt_nro150/mri
 
-epi_path_wo_bnum=$mri_path/ID$ID/epi_pre/epi_*
+epi_path_wo_bnum=$mri_path/ID$ID/epi_pre_2018/epi_*
 
-anat_path=$mri_path/ID$ID/T1
+anat_path=$mri_path/ID$ID/T1_2018
 atlas_path=$mri_path/atlas
 
 #onsets_path=$mri_path/ID$ID/onsets/new
-onsets_path=$mri_path/ID$ID/onsets/new/shift${onset_shift}
+onsets_path=$mri_path/ID$ID/onsets/new3/shift${onset_shift}
 
-gppi_path=$mri_path/ID$ID/gppi/gppi_NOI_NEW # EDIT #
+gppi_path=$mri_path/ID$ID/gppi/gppi_power_all_cond2 # EDIT #
 
 PPI_approach=FSL # EDIT #
 #PPI_approach=SPM
 
 ts_path=$gppi_path/ts
 
-cond_labels=(CR_conf \
-			 near_miss_conf \
-			 near_miss_unconf \
-			 near_hit_unconf \
-			 near_hit_conf \
-			 supra_hit_conf \
-			 resp1_b6 \
-			 resp1_b7)
+cond_labels=(CR \
+			 near_miss \
+			 near_hit \
+			 supra_hit)
+
+#cond_labels=(CR_conf \
+#			 near_miss_conf \
+#			 near_hit_conf \
+#			 supra_hit_conf)
 
 ### EPIs
 valid_blocks_txt=$onsets_path/$ID\_valid_blocks.1D
@@ -67,9 +68,7 @@ nuisance_reg_wildcard=denoised/epi_*nuisance_reg.1D
 
 ### ATLAS
 ROI_r=4 # EDIT #
-#atlas=$atlas_path/power_2011_MNI_r${ROI_r}_epi.nii.gz # EDIT #
-#atlas=$atlas_path/stim_conf_r${ROI_r}_epi.nii.gz
-atlas=$atlas_path/stim_conf_NEW12_extended_r${ROI_r}_epi.nii.gz
+atlas=$atlas_path/power_2011_MNI_r${ROI_r}_epi.nii.gz # EDIT #
 
 ### BRAIN MASK
 epi_brain_mask=$anat_path/MNI_bmask_epi_d.nii.gz
@@ -154,11 +153,6 @@ cat ${nuisance_reg_valid_files[@]} > $nuisance_reg_valid
 for ((i=0; i<$(3dinfo -ni ${input_files[0]}); i++)); do
 #for ((i=0; i<1; i++)); do
 
-	# 1 regressor for each stimulus condition (null, miss, hit, supra)
-	# 1 regressor for each response onset (resp1, resp2)
-	# 1 regressor for ROI time series
-	# 2 regressor for ROI interaction regressors (inter_miss, inter_hit)
-
 	case $((i + 1)) in
 
 	[0-9]) ID_str=00$((i + 1)) ;;
@@ -181,34 +175,32 @@ for ((i=0; i<$(3dinfo -ni ${input_files[0]}); i++)); do
 #				 supra)
 
 #	3dDeconvolve -input ${epi_valid[@]} \
-	3dDeconvolve -input ${input_files[@]} \
+	3dDeconvolve -force_TR $TR \
+				 -input ${input_files[@]} \
 				 -jobs $CPUs \
 				 -censor $mc_censor_valid \
-				 -force_TR $TR \
 				 -polort $pnum \
 				 -local_times \
-				 -num_stimts 18 \
+				 -num_stimts 9 \
 				 -stim_times 1 $onsets_path/${ID}_${cond_labels[0]}_t_shift${onset_shift}.1D $resp_model -stim_label 1 ${cond_labels[0]} \
 				 -stim_times 2 $onsets_path/${ID}_${cond_labels[1]}_t_shift${onset_shift}.1D $resp_model -stim_label 2 ${cond_labels[1]} \
 				 -stim_times 3 $onsets_path/${ID}_${cond_labels[2]}_t_shift${onset_shift}.1D $resp_model -stim_label 3 ${cond_labels[2]} \
 				 -stim_times 4 $onsets_path/${ID}_${cond_labels[3]}_t_shift${onset_shift}.1D $resp_model -stim_label 4 ${cond_labels[3]} \
-				 -stim_times 5 $onsets_path/${ID}_${cond_labels[4]}_t_shift${onset_shift}.1D $resp_model -stim_label 5 ${cond_labels[4]} \
-				 -stim_times 6 $onsets_path/${ID}_${cond_labels[5]}_t_shift${onset_shift}.1D $resp_model -stim_label 6 ${cond_labels[5]} \
-				 -stim_times 7 $onsets_path/${ID}_${cond_labels[6]}_t_shift${onset_shift}.1D $resp_model -stim_label 7 ${cond_labels[6]} \
-				 -stim_times 8 $onsets_path/${ID}_${cond_labels[7]}_t_shift${onset_shift}.1D $resp_model -stim_label 8 ${cond_labels[7]} \
-				 -stim_times 9 $onsets_path/${ID}_resp2_t_shift${onset_shift}.1D $resp_model -stim_label 9 resp2 \
-				 -stim_file 10 $ts_path/ts_${ID}_dt.1D{$i}\' -stim_label 10 ROI \
-				 -stim_file 11 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[0]}.1D{$i}\' -stim_label 11 ${cond_labels[0]}_I \
-				 -stim_file 12 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[1]}.1D{$i}\' -stim_label 12 ${cond_labels[1]}_I \
-				 -stim_file 13 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[2]}.1D{$i}\' -stim_label 13 ${cond_labels[2]}_I \
-				 -stim_file 14 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[3]}.1D{$i}\' -stim_label 14 ${cond_labels[3]}_I \
-				 -stim_file 15 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[4]}.1D{$i}\' -stim_label 15 ${cond_labels[4]}_I \
-				 -stim_file 16 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[5]}.1D{$i}\' -stim_label 16 ${cond_labels[5]}_I \
-				 -stim_file 17 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[6]}.1D{$i}\' -stim_label 17 ${cond_labels[6]}_I \
-				 -stim_file 18 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[7]}.1D{$i}\' -stim_label 18 ${cond_labels[7]}_I \
+				 -stim_file 5 $ts_path/ts_${ID}_dt.1D{$i}\' -stim_label 5 ROI \
+				 -stim_file 6 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[0]}.1D{$i}\' -stim_label 6 ${cond_labels[0]}_I \
+				 -stim_file 7 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[1]}.1D{$i}\' -stim_label 7 ${cond_labels[1]}_I \
+				 -stim_file 8 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[2]}.1D{$i}\' -stim_label 8 ${cond_labels[2]}_I \
+				 -stim_file 9 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[3]}.1D{$i}\' -stim_label 9 ${cond_labels[3]}_I \
 				 -ortvec $nuisance_reg_valid nuisance_reg \
 				 -x1D $glm_outdir/${ID}_${ID_str}_gppi.xmat.1D \
 				 -x1D_stop
+
+#				 -stim_times 5 $onsets_path/${ID}_${cond_labels[4]}_t_shift${onset_shift}.1D $resp_model -stim_label 5 ${cond_labels[4]} \
+#				 -stim_times 6 $onsets_path/${ID}_${cond_labels[5]}_t_shift${onset_shift}.1D $resp_model -stim_label 6 ${cond_labels[5]} \
+#				 -stim_times 7 $onsets_path/${ID}_${cond_labels[6]}_t_shift${onset_shift}.1D $resp_model -stim_label 7 ${cond_labels[6]} \
+#				 -stim_times 8 $onsets_path/${ID}_${cond_labels[7]}_t_shift${onset_shift}.1D $resp_model -stim_label 8 ${cond_labels[7]} \
+#				 -stim_times 9 $onsets_path/${ID}_resp2_t_shift${onset_shift}.1D $resp_model -stim_label 9 resp2 \
+
 
 #				 -num_glt 18 \
 #				 -gltsym 'SYM: '"${cond_labels[4]}"'_I -'"${cond_labels[1]}"'_I' -glt_label 1 ${cond_labels[4]}_I-${cond_labels[1]}_I \
@@ -229,6 +221,12 @@ for ((i=0; i<$(3dinfo -ni ${input_files[0]}); i++)); do
 #				 -gltsym 'SYM: 0.25*'"${cond_labels[1]}"' +0.25*'"${cond_labels[2]}"' +0.25*'"${cond_labels[3]}"' +0.25*'"${cond_labels[4]}"'' -glt_label 16 stim_mean \
 #				 -gltsym 'SYM: 0.25*'"${cond_labels[1]}"' +0.25*'"${cond_labels[2]}"' +0.25*'"${cond_labels[3]}"' +0.25*'"${cond_labels[4]}"' -'"${cond_labels[0]}"'' -glt_label 17 stim_mean-null \
 #				 -gltsym 'SYM: '"${cond_labels[7]}"'_I -'"${cond_labels[6]}"'_I' -glt_label 18 ${cond_labels[7]}_I-${cond_labels[6]}_I \
+
+
+#				 -stim_file 15 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[4]}.1D{$i}\' -stim_label 15 ${cond_labels[4]}_I \
+#				 -stim_file 16 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[5]}.1D{$i}\' -stim_label 16 ${cond_labels[5]}_I \
+#				 -stim_file 17 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[6]}.1D{$i}\' -stim_label 17 ${cond_labels[6]}_I \
+#				 -stim_file 18 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[7]}.1D{$i}\' -stim_label 18 ${cond_labels[7]}_I \
 
 
 #				 -stim_file 10 $ts_path/ts_${ID}_${PPI_approach}_${cond_labels[0]}.1D{$i}\' -stim_label 10 ${cond_labels[0]}_I \
@@ -254,7 +252,7 @@ for ((i=0; i<$(3dinfo -ni ${input_files[0]}); i++)); do
 	3dREMLfit -input "`echo ${epi_valid[@]}`" \
 			  -mask $GLM_mask \
 			  -matrix $glm_outdir/${ID}_${ID_str}_gppi.xmat.1D \
-			  -rout -fout -tout \
+			  -tout -nobout \
 			  -Rbuck $glm_outdir/${ID}_${ID_str}_gppi_REML.nii.gz
 
 #			  -Rerrts $glm_outdir/${ID}_${ID_str}_gppi_errts_REML.nii.gz \

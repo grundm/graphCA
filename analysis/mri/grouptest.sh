@@ -1,12 +1,14 @@
 #!/bin/bash
 # grouptest.sh
+#
+# Start AFNI & R before
 
 # ================================================================================
 # SETTINGS
 # --------------------------------------------------------------------------------
 
 ### GLM MODELS
-glm_models=(stim_conf)
+glm_models=(all_cond2)
 
 #CPUs=$(( $(nproc) - 1))
 CPUs=60 # EDIT #
@@ -39,7 +41,7 @@ glm_paths=$mri_path/ID*/glm # EDIT #
 ### BRAIN MASK
 
 # Brain mask file relative to GLM path
-epi_brain_mask_rel2glm=../../T1/MNI_bmask_epi_d.nii.gz # EDIT #  - GLM
+epi_brain_mask_rel2glm=../../T1_2018/MNI_bmask_epi_d.nii.gz # EDIT #  - GLM
 #epi_brain_mask_rel2glm=../../../../T1/MNI_bmask_epi_d.nii.gz #  - gPPI
 
 
@@ -47,6 +49,14 @@ epi_brain_mask_rel2glm=../../T1/MNI_bmask_epi_d.nii.gz # EDIT #  - GLM
 
 full_label_str=Full
 R2_label_suffix=_R^2
+
+R2_available=FALSE # use "TRUE" if it should work
+
+### COVARIATES
+
+cov_file=$mri_path/group/cov_file.txt
+cov_file_ttest=$mri_path/group/cov_file_ttest.txt
+# 2 files because 3dttest++ is looking for different subj IDs with *_glm_REML
 
 # ================================================================================
 # OUTPUT
@@ -57,9 +67,10 @@ R2_label_suffix=_R^2
 group_path=$mri_path/group
 #group_path=$mri_path/group/gppi_cS1_NEW12/glm_SPM # EDIT #
 
-out_dirname_ttest=ttest
+out_dirname_ttest=ttest2 # EDIT #
+#out_dirname_ttest=ttest_2nd_half
 
-out_dirname_MEMA=MEMA
+out_dirname_MEMA=MEMA2 # EDIT #
 out_dirname_MEMA_cmd=cmd
 out_dirname_R2=R2
 
@@ -116,9 +127,12 @@ for glm_model in ${glm_models[@]}; do
 
 	mkdir -p $out_dir_MEMA_cmd
 
-	out_dir_R2=$group_path/$glm_model/$out_dirname_R2
+	if [ "$R2_available" = "TRUE" ]; then
 
-	mkdir -p $out_dir_R2
+		out_dir_R2=$group_path/$glm_model/$out_dirname_R2
+
+		mkdir -p $out_dir_R2
+	fi
 
 	# Combine all dilated normalized brain mask
 	epi_brain_masks=(${glm_paths[@]/%//$glm_model/$epi_brain_mask_rel2glm})
@@ -134,10 +148,12 @@ for glm_model in ${glm_models[@]}; do
 	#echo ${glm_files[@]}
 
 	# Average Full Model R²
-	glm_files_full_R2=(${glm_files[@]/%/[$full_label_str$R2_label_suffix]})
+	if [ "$R2_available" = "TRUE" ]; then
+		glm_files_full_R2=(${glm_files[@]/%/[$full_label_str$R2_label_suffix]})
 
-	3dMean -prefix $out_dir_R2/$full_label_str$R2_mean_suffix \
-			${glm_files_full_R2[@]}
+		3dMean -prefix $out_dir_R2/$full_label_str$R2_mean_suffix \
+				${glm_files_full_R2[@]}
+	fi
 
 	# Create array with GLM labels
 	IFS='|' read -ra glm_labels <<< $(3dinfo -label ${glm_files[0]})
@@ -168,11 +184,14 @@ for glm_model in ${glm_models[@]}; do
 #		printf "%s \n" ${glm_files_coef[@]}
 
 		# Average Regressor R²
-		
-		glm_files_coef_R2=(${glm_files[@]/%/[${coef_label%#*}$R2_label_suffix]})
+		if [ "$R2_available" = "TRUE" ]; then
 
-		3dMean -prefix $out_dir_R2/$coef_label_str$R2_mean_suffix \
-				${glm_files_coef_R2[@]}
+			glm_files_coef_R2=(${glm_files[@]/%/[${coef_label%#*}$R2_label_suffix]})
+
+			3dMean -prefix $out_dir_R2/$coef_label_str$R2_mean_suffix \
+					${glm_files_coef_R2[@]}
+
+		fi
 
 		########################################
 		### T-TEST #############################
@@ -184,8 +203,13 @@ for glm_model in ${glm_models[@]}; do
 		3dttest++ -dupe_ok \
 				  -setA ${glm_files_coef[@]} \
 				  -mask $group_mask \
-				  -prefix $ttest_file
+				  -prefix $ttest_file \
+				  -Clustsim \
+	 			  -prefix_clustsim $coef_label_str$suffix_ttest_clustsim \
+				  -covariates $cov_file_ttest \
+				  -tempdir $out_dir_ttest
 
+		mv $coef_label_str$suffix_ttest_clustsim* $out_dir_ttest
 
 		########################################
 		### MEMA ###############################
@@ -206,6 +230,9 @@ for glm_model in ${glm_models[@]}; do
 								-missing_data 0 \
 								-model_outliers \
 								-residual_Z \
+							    -covariates $cov_file \
+							    -covariates_center mean \
+							    -covariates_model center=different slope=different \
 							 -prefix $MEMA_file \
 							 -write_script $MEMA_cmd_file
 

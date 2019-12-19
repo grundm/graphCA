@@ -104,9 +104,9 @@ rm $outdir/motion_sqr_*.1D
 # Enormous slowdown by ~971 bandpass regressors
 
 # Setup design matrix
-3dDeconvolve -input $input_file \
+3dDeconvolve -force_TR $TR \
+			 -input $input_file \
 			 -mask $brainmask \
-			 -force_TR $TR \
 			 -polort $pnum \
 			 -jobs $CPUs \
 			 -ortvec $nuisance_reg nuisance_reg \
