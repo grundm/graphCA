@@ -324,6 +324,46 @@ for glm_model in ${glm_models[@]}; do
 
 	;;
 
+	stim_limPre)
+
+		# 1 regressor for stimulus
+		# 1 regressor for no stimulus
+		# 1 regressor for each response onset (resp1, resp2)
+
+		if [ -f "$valid_blocks_txt" ]; then
+
+		mkdir $glm_path/$glm_model
+
+		3dDeconvolve -force_TR $TR \
+					 -input ${epi_valid[@]} \
+					 -jobs $CPUs \
+					 -mask $epi_brain_mask \
+					 -censor $mc_censor_valid \
+					 -polort $pnum \
+					 -local_times \
+					 -num_stimts 4 \
+					 -stim_times 1 $onsets_path/$ID\_null_t_shift${onset_shift}.1D $resp_model -stim_label 1 null \
+					 -stim_times 2 $onsets_path/$ID\_near_t_shift${onset_shift}.1D $resp_model -stim_label 2 near \
+					 -stim_times 3 $onsets_path/$ID\_resp1_t_shift${onset_shift}.1D $resp_model -stim_label 3 resp1 \
+					 -stim_times 4 $onsets_path/$ID\_resp2_t_shift${onset_shift}.1D $resp_model -stim_label 4 resp2 \
+					 -ortvec $nuisance_reg_valid[0..5] nuisance_reg \
+					 -num_glt 1 \
+					 -gltsym 'SYM: near -null' -glt_label 1 near-null \
+					 -x1D $glm_path/$glm_model/${ID}_glm.xmat.1D \
+					 -x1D_stop
+
+		# Model Serial Correlations in the Residuals
+
+		3dREMLfit -input "`echo ${epi_valid[@]}`" \
+				  -mask $epi_brain_mask \
+				  -matrix $glm_path/$glm_model/${ID}_glm.xmat.1D \
+				  -tout -nobout \
+				  -Rbuck $glm_path/$glm_model/${ID}_glm_REML.nii.gz
+
+		fi
+
+	;;
+
 	esac
 
 done # LOOP - GLM MODELS
