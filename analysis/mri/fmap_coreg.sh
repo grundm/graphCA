@@ -1,6 +1,6 @@
 #!/bin/bash
 # fmap_coreg.sh $epi $epi_ref $fmap_mag $fmap_phase $proc_path $erode_factor $deltaTE $echo_spacing $phase_dir $banat
-# 
+#
 # Requires FSL & AFNI
 #
 # Unfortunately, it does not combine the linear transformation (EPI -> fmap) and unwarping in one interpolation step.
@@ -48,17 +48,17 @@ banat=${10}
 # <deltaTE> is the echo time difference of the fieldmap sequence - find this out form the operator (defaults are *usually* 2.46ms on SIEMENS )
 # 0003 gre_field_map_32
 # 0004 gre_field_map_32
-# > dicom_hinfo -tag 0018,0081 ID01/*PRISMA/DICOM/00030001
-# ID01/13061.30_20160127_074141.PRISMA/DICOM/00030001 4.92
-# > dicom_hinfo -tag 0018,0081 ID01/*PRISMA/DICOM/00040001
-# ID01/13061.30_20160127_074141.PRISMA/DICOM/00040001 7.38
+# > dicom_hinfo -tag 0018,0081 ID*/*PRISMA/DICOM/00030001
+# 4.92
+# > dicom_hinfo -tag 0018,0081 ID*/*PRISMA/DICOM/00040001
+# 7.38
 
 # echo_spacing=?
 # Protocol: Echoabstand=0.66ms=0.00066s (~echo spacing)
 # effective echo spacing = total EPI readout time / matrix size
 # dwell time = 1/bandwidth = 1/1816 Hz/Px = 0.00055s
 # Echo spacing == dwell time per phase-encode line ??? (fungue help: --dwell	set the EPI dwell time per phase-encode line - same as echo spacing - (sec))
-# However, here it is different: http://support.brainvoyager.com/functional-analysis-preparation/27-pre-processing/459-epi-distortion-correction-echo-spacing.html 
+# However, here it is different: http://support.brainvoyager.com/functional-analysis-preparation/27-pre-processing/459-epi-distortion-correction-echo-spacing.html
 
 # phase_dir=?
 # unwarp_dir = phase_dir = shift_dir?
@@ -163,7 +163,7 @@ fugue --in=$fmap_path/`basename $epi .nii.gz`_fmap.nii.gz \
 #		  --rel \
 #		  --interp=spline \
 #		  --out=$fmap_path/$epi_ref_base\_fmap_unwarp2.nii.gz
-       
+
 # Why are ... so different?
 # - $fmap_path/$epi_ref_base\_fmap_unwarp.nii.gz
 # - $fmap_path/$epi_ref_base\_fmap_unwarp2.nii.gz
@@ -182,4 +182,3 @@ fugue --in=$fmap_path/`basename $epi .nii.gz`_fmap.nii.gz \
 			-prefix $fmap_path/$epi_ref_base\_banat.nii.gz \
 			-final wsinc5 \
 			-1Dmatrix_save $fmap_path/$epi_ref_base\_fmap_unwarp_2banat_mat.1D
-
