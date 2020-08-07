@@ -7,7 +7,7 @@ function metric_rnd = rnd_graph(net, rnd_iter, rewire_iter)
 % their average in a structure.
 %
 % Author:           Martin Grund (mgrund@cbs.mpg.de)
-% Last Update:      February 14, 2017
+% Last Update:      July 22, 2020
 
     metric_rnd.rnd_iter = rnd_iter;
     metric_rnd.rewire_iter = rewire_iter;
@@ -42,6 +42,19 @@ function metric_rnd = rnd_graph(net, rnd_iter, rewire_iter)
         % Average path length (does not include infinite distances)
         metric_rnd.L(j,1) = charpath(distance_wei(net_rnd),0,0);
         
+        % Betweeness centrality (input: connection-length matrix)
+        metric_rnd.BC(j,:) = betweenness_wei(weight_conversion(net_rnd,'lengths'));
+
+        % Betweenness centrality may be normalised to the range [0,1] as
+        % BC/[(N-1)(N-2)], where N is the number of nodes in the network.
+        metric_rnd.BC_norm(j,:) = metric_rnd.BC(j,:)/((length(net_rnd)-1)*(length(net_rnd)-2));
+        metric_rnd.BC_norm_mean(j,1) = mean(metric_rnd.BC_norm(j,:));
+
+        % Within-module degree (adaptation by Sadaghiani et al., 2015)
+        metric_rnd.WD(j,:) = module_degree_bu(weight_conversion(net_rnd,'binarize'),Ci_rnd);
+
+        metric_rnd.WD_mean(j,1) = mean(metric_rnd.WD(j,:));
+        
     end
 
     % Average all metrics
@@ -55,3 +68,7 @@ function metric_rnd = rnd_graph(net, rnd_iter, rewire_iter)
     metric_rnd.mean.C_mean = mean(metric_rnd.C_mean);
     
     metric_rnd.mean.L = mean(metric_rnd.L);
+    
+    metric_rnd.mean.BC_norm_mean = mean(metric_rnd.BC_norm_mean);
+    
+    metric_rnd.mean.WD_mean = mean(metric_rnd.WD_mean);

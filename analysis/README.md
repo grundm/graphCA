@@ -1,6 +1,6 @@
 # GraphCA - Data analysis
 
-## Behavioral data analysis 
+## Behavioral data analysis
 
 Directory: behavior/
 
@@ -53,7 +53,7 @@ Directory: mri/
 
 ### gPPI (generalized Psychophysiological Interaction)
 
-1. atlas.sh - creates mask volume with numbered ROIs based on list of coordinates 
+1. atlas.sh - creates mask volume with numbered ROIs based on list of coordinates
 2. gppi_pre.sh<sup>*</sup> - creates regressors for each ROI's gPPI
 3. gppi2.sh<sup>*</sup> - run gPPI for each ROI
 4. beta_mat.sh - extract beta weights for gPPI interaction regressor for each ROI's gPPI at every other ROI
@@ -77,3 +77,4 @@ Directory: graph/
 ### Graph metrics
 
 1. graph_metrics.m - main script to run graph theory analysis
+2. Nested functions: parrun_graph.m -> graph_conmat.m -> analyze_graph.m -> rnd_graph.m

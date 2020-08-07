@@ -1,4 +1,4 @@
-function c = cmp_cond(d,cond_ind,CI_width)
+function c = cmp_cond(d,cond_ind,CI_width,wo_BC_WD)
 % c = cmp_cond(d,CI_width) combines the group statistics (see groupstats.m) 
 % for the conditions defined with "cond_ind" (column index, since the 
 % structure is thresholds across rows and conditions across columns) and 
@@ -6,7 +6,7 @@ function c = cmp_cond(d,cond_ind,CI_width)
 % intervalls for the width defined in "CI_width" (e.g., 0.95 for 95%).
 
 % Author:           Martin Grund (mgrund@cbs.mpg.de)
-% Last Update:      March 29, 2017
+% Last Update:      July 30, 2020
 
 %% Combine group data of each condition
 
@@ -29,6 +29,11 @@ for i = 1:length(d)
     c.Ci_max(i,:) = d(i).group.gGraph.Ci_max(cond_ind);
     c.Ci_max_rnd(i,:) = d(i).group.gGraph.Ci_max_rnd(cond_ind);
     
+    if wo_BC_WD == 0
+        c.BC_norm_mean(i,:) = d(i).group.gGraph.BC_norm_mean(cond_ind);
+        c.WD_mean(i,:) = d(i).group.gGraph.WD_mean(cond_ind);
+    end
+    
     c.signrank(:,i) = d(i).group.gGraph.signrank;
     
     % Participant data
@@ -48,6 +53,11 @@ for i = 1:length(d)
     c.all.P_mean(:,thr_ind) = d(i).group.gGraph.all.P_mean(:,cond_ind);
     c.all.C_mean(:,thr_ind) = d(i).group.gGraph.all.C_mean(:,cond_ind);
     c.all.L(:,thr_ind) = d(i).group.gGraph.all.L(:,cond_ind);
+    
+    if wo_BC_WD == 0
+        c.all.BC_norm_mean(:,thr_ind) = d(i).group.gGraph.all.BC_norm_mean(:,cond_ind);
+        c.all.WD_mean(:,thr_ind) = d(i).group.gGraph.all.WD_mean(:,cond_ind);
+    end
 end
 
 % Small-worldness (true if S >> 1)
@@ -58,6 +68,11 @@ c.S = c.C_mean./c.L;
 [c.SEM.P_mean, c.CI.P_mean] = SEM_CI(c.all.P_mean, CI_width, cond_num);
 [c.SEM.C_mean, c.CI.C_mean] = SEM_CI(c.all.C_mean, CI_width, cond_num);
 [c.SEM.L, c.CI.L] = SEM_CI(c.all.L, CI_width, cond_num);
+
+if wo_BC_WD == 0
+    [c.SEM.BC_norm_mean, c.CI.BC_norm_mean] = SEM_CI(c.all.BC_norm_mean, CI_width, cond_num);
+    [c.SEM.WD_mean, c.CI.WD_mean] = SEM_CI(c.all.WD_mean, CI_width, cond_num);
+end
 
 function [SEM, CI] = SEM_CI(metric_mat, CI_w, cond_num)
 

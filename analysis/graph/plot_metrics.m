@@ -97,7 +97,7 @@ x_tick_rotation = 0;
 
 for i = 1:length(metric_str)
 
-    fig1 = subplot(1,4,i);
+    fig1 = subplot(1,length(fig_titles),i);
     
     %set(fig1, 'color', [0.9 0.9 0.9])
     set(fig1, 'FontSize', axis_size) % Because axis tick label cannot be adressed directly
@@ -132,6 +132,8 @@ for i = 1:length(metric_str)
     
     % Axis range       
     axis(fig1,[min(c.thr*100)-5 max(c.thr*100)+5 y_range(i,:)]);
+    
+    ylim('auto');
     
     % X-axis ticks    
     set(ax,...

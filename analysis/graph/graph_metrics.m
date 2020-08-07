@@ -36,8 +36,9 @@ save([gppi_group_path '/graph_metrics_conmat_r100_05-40.mat'], 'd', '-v7.3');
 
 cond_ind = 1:3;
 CI_width = 0.95;
+wo_BC_WD = 1; % 1 - false for data without betweenness centrality and within-module degree; 0 - true
 
-c = cmp_cond(d, cond_ind, CI_width);
+c = cmp_cond(d, cond_ind, CI_width, wo_BC_WD);
 
 %% SAVE GRAPH ANALYTICAL RESULTS
 
@@ -52,12 +53,19 @@ plot_metrics(c);
 
 combinations = [1 2; 1 3; 2 3];
 
-for j = 1:3
+wo_BC_WD = 1;
+
+for j = 1:size(combinations,1)
     for i = 1:8
         p_Q(j,i) = c.signrank(i).Q(combinations(j,1),combinations(j,2));
         p_P(j,i) = c.signrank(i).P_mean(combinations(j,1),combinations(j,2));
         p_C(j,i) = c.signrank(i).C_mean(combinations(j,1),combinations(j,2));
         p_L(j,i) = c.signrank(i).L(combinations(j,1),combinations(j,2));
+        
+        if wo_BC_WD == 0
+            p_BC_norm_mean(j,i) = c.signrank(i).BC_norm_mean(combinations(j,1),combinations(j,2));
+            p_WD_mean(j,i) = c.signrank(i).WD_mean(combinations(j,1),combinations(j,2));
+        end
         
     end
 end
@@ -66,6 +74,11 @@ end
 [h.P, crit_p.P, adj_ci_cvrg.P, adj_p.P] = fdr_bh(p_P);
 [h.C, crit_p.C, adj_ci_cvrg.C, adj_p.C] = fdr_bh(p_C);
 [h.L, crit_p.L, adj_ci_cvrg.L, adj_p.L] = fdr_bh(p_L);
+
+if wo_BC_WD == 0
+    [h.BC_norm_mean, crit_p.BC_norm_mean, adj_ci_cvrg.BC_norm_mean, adj_p.BC_norm_mean] = fdr_bh(p_BC_norm_mean);
+    [h.WD_mean, crit_p.WD_mean, adj_ci_cvrg.WD_mean, adj_p.WD_mean] = fdr_bh(p_WD_mean);
+end
 
 %% Bayes Factor
 
