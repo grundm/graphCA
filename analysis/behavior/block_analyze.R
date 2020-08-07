@@ -33,6 +33,10 @@ unconf_max <- 2
 
 db <- data.frame(ID = integer(0),
                  block = integer(0),
+                 conf_rt1 = integer(0),
+                 unconf_rt1 = integer(0),
+                 conf_rt2 = integer(0),
+                 unconf_rt2 = integer(0),
                  null_intensity = numeric(0),
                  null_yes = numeric(0),
                  null_conf = numeric(0),
@@ -129,6 +133,11 @@ for (i in unique(d$ID)) {
     d_sub <- subset(d, ID==i & block==j & resp_filter)
     
     results <- c(i,j)
+    
+    results <- append(results, c(mean(d_sub$resp1_t_corr[d_sub$resp2 <= unconf_max]),
+                                 mean(d_sub$resp1_t_corr[d_sub$resp2 >= conf_min]),
+                                 mean(d_sub$resp2_t_corr[d_sub$resp2 <= unconf_max]),
+                                 mean(d_sub$resp2_t_corr[d_sub$resp2 >= conf_min])) )
     
     # Loop conditions
     for (cond in sort(unique(d$stim_type)) ) {
