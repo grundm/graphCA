@@ -9,6 +9,10 @@ Martin Grund<sup>1*</sup>, Norman Forschack<sup>1,2</sup>, Till Nierhaus<sup>1,3
 
 <sup>*</sup> Corresponding author: mgrund@cbs.mpg.de
 
+## Preprint
+
+Grund, M., Forschack, N., Nierhaus, T., & Villringer, A. (2020). Neural correlates of conscious tactile perception: An analysis of BOLD activation patterns and graph metrics. bioRxiv. https://doi.org/10.1101/2019.12.19.882365
+
 ## Repository content
 
 Code to run and analyze fMRI study of somatosensory detection task with electrical finger nerve stimulation
